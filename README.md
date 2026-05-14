@@ -174,4 +174,4 @@ Checks that Postgres, ChromaDB, SearXNG, Ollama, and the Lumina API are all resp
 
 ## License
 
-MIT
+[GPL](LICENSE)
