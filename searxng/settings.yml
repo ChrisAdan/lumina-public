@@ -1,0 +1,41 @@
+# Minimal SearXNG config for Lumina
+# Full docs: https://docs.searxng.org/admin/settings/
+
+use_default_settings: true
+
+general:
+  instance_name: "Lumina Search"
+  debug: false
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  default_lang: "en"
+
+server:
+  secret_key: "lumina-searxng-secret-change-me"
+  limiter: false
+  image_proxy: false
+  port: 8080
+  bind_address: "0.0.0.0"
+
+ui:
+  default_theme: simple
+  default_locale: en
+
+# Enable JSON output format so lumina-api can query it
+search:
+  formats:
+    - html
+    - json
+
+engines:
+  - name: google
+    engine: google
+    shortcut: g
+  - name: duckduckgo
+    engine: duckduckgo
+    shortcut: d
+  - name: brave
+    engine: brave
+    shortcut: br

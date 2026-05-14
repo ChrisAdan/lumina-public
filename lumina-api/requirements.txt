@@ -1,0 +1,45 @@
+# ── Core API ───────────────────────────────────────────
+fastapi
+uvicorn[standard]
+python-multipart
+
+# ── Database ───────────────────────────────────────────
+psycopg2-binary
+sqlalchemy
+
+# ── Vector DB ──────────────────────────────────────────
+chromadb==0.6.3          # pinned — 0.6.x API differs from 0.5.x
+
+# ── HTTP ───────────────────────────────────────────────
+httpx
+requests
+
+# ── Config ─────────────────────────────────────────────
+python-dotenv
+
+# ── Scheduler ──────────────────────────────────────────
+apscheduler
+
+# ── Rate limiting ──────────────────────────────────────
+slowapi
+
+# ── Google (Calendar, Gmail) ───────────────────────────
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
+
+# ── Google Drive text extraction ───────────────────────
+pdfminer.six
+python-docx
+
+# ── Gmail HTML stripping ───────────────────────────────
+beautifulsoup4
+lxml
+
+# ── Natural-language date parsing (reminders) ──────────
+dateparser
+
+# ── PDF / EPUB ingestion (library / document_search) ──
+pypdf
+EbookLib

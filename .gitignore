@@ -1,0 +1,46 @@
+# Environment — never commit real secrets
+.env
+.env.prod
+.env.dev
+
+# Agent identity — personal; copy from AGENTS.md.example
+AGENTS.md
+
+# Vault content — not versioned
+files/*
+!files/.gitkeep
+
+# Sandbox — ephemeral Python runner workspace
+sandbox/*
+!sandbox/.gitkeep
+
+# Backups
+backups/*
+!backups/.gitkeep
+
+# Google OAuth tokens — contain sensitive credentials
+credentials.json
+token.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# ChromaDB local data (if running outside Docker)
+.chroma/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+bench_results.log
+
+# Editor
+.idea/
+.vscode/
+*.swp

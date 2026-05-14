@@ -1,0 +1,156 @@
+# docker-compose.yml
+
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: lumina-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./lumina-api/db/migrations/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} -c 'SELECT 1' >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  chroma:
+    image: chromadb/chroma:0.6.3
+    container_name: lumina-chroma
+    restart: always
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/v2/heartbeat || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  searxng:
+    image: searxng/searxng:latest
+    container_name: lumina-searxng
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    environment:
+      - SEARXNG_BASE_URL=http://localhost:8080/
+
+  lumina-api:
+    build: ./lumina-api
+    container_name: lumina-api
+    restart: always
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./lumina-api:/app
+      - ./AGENTS.md:/app/AGENTS.md:ro
+      - ./files:/app/files
+      - ./sandbox:/app/sandbox
+      - ./backups:/app/backups
+      - /var/run/docker.sock:/var/run/docker.sock
+    env_file: .env
+    environment:
+      # Docker-network URLs — must be overridden here; .env.prod can't know service hostnames
+      - POSTGRES_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - CHROMA_URL=http://chroma:8000
+      - SEARXNG_URL=http://searxng:8080
+      - OLLAMA_URL=http://host.docker.internal:11434
+      - OLLAMA_KEEP_ALIVE=-1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      chroma:
+        condition: service_healthy
+    group_add:
+      - "988"   # host docker GID — run `stat -c '%g' /var/run/docker.sock` and update if different
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health/')\" || exit 1"]
+      interval: 180s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: lumina-webui
+    restart: always
+    ports:
+      - "3000:8080"
+    environment:
+      - ENABLE_OLLAMA_API=false
+      - OPENAI_API_BASE_URL=http://lumina-api:8000/v1
+      - OPENAI_API_KEY=sk-lumina-local
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
+    volumes:
+      - webui_data:/app/backend/data
+    depends_on:
+      lumina-api:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  ntfy:
+    image: binwiederhier/ntfy
+    container_name: lumina-ntfy
+    restart: always
+    ports:
+      - "8002:80"
+    volumes:
+      - ntfy_data:/var/lib/ntfy
+    # Set --base-url to your server's IP or hostname so ntfy push links work externally
+    command: serve --base-url http://localhost:8002 --upstream-base-url https://ntfy.sh
+
+  python-runner:
+    image: python:3.11-slim
+    container_name: lumina-python-runner
+    working_dir: /app
+    volumes:
+      - ./sandbox:/app
+    command: sleep infinity
+    network_mode: none
+    restart: always
+
+  metabase:
+    image: metabase/metabase:latest
+    container_name: lumina-metabase
+    restart: always
+    ports:
+      - "3001:3000"   # access at http://<tailscale-ip>:3001
+    environment:
+      - MB_DB_TYPE=postgres
+      - MB_DB_DBNAME=${METABASE_DB_NAME:-metabase}
+      - MB_DB_PORT=5432
+      - MB_DB_USER=${POSTGRES_USER}
+      - MB_DB_PASS=${POSTGRES_PASSWORD}
+      - MB_DB_HOST=postgres
+      - MB_SEND_EMAIL_ON_FIRST_LOGIN=false
+      - MB_ANON_TRACKING_ENABLED=false
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s   # Metabase JVM needs time on first boot
+
+volumes:
+  pgdata:
+  chroma_data:
+  webui_data:
+  ntfy_data:
