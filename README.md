@@ -45,8 +45,8 @@ Lumina runs comfortably on a mini-PC with **16 GB RAM** (e.g. GMKtec M6, Beelink
 ### 1. Clone and configure
 
 ```bash
-git clone https://github.com/your-username/lumina.git
-cd lumina
+git clone https://github.com/ChrisAdan/lumina-public.git
+cd lumina-public
 cp .env.example .env
 # Edit .env — at minimum set POSTGRES_PASSWORD, WEBUI_SECRET_KEY, USER_NAME, USER_EMAIL
 ```
@@ -81,8 +81,8 @@ Open WebUI will be available at `http://localhost:3000`.
 ## Directory structure
 
 ```
-lumina/
-├── AGENTS.md              # agent system prompt (gitignored — copy from .env.example)
+lumina-public/
+├── AGENTS.md              # agent system prompt (gitignored — copy from AGENTS.md.example)
 ├── AGENTS.md.example      # template
 ├── CLAUDE.md              # dev guidance for Claude Code
 ├── docker-compose.yml
